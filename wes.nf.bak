@@ -1,0 +1,59 @@
+#!/usr/bin/env nextflow
+
+nextflow.enable.dsl=2
+
+params.input_fastqs = "/home/ubuntu/WES/fastq/*_{R1_001,R2_001}.fastq.gz"
+fastq_files = Channel.fromFilePairs(params.input_fastqs, type: 'file')
+params.reference_folder = "/home/ubuntu/WES/GRCh38_reference_genome"
+reference_folder = file(params.reference_folder)
+params.reference_name = "GRCh38_full_analysis_set_plus_decoy_hla.fa"
+params.out = "parabricks_wes_output"
+params.baits_bed = "/home/ubuntu/WES/panel-00005_withChr.baits.grch38.interval_list"
+baits_bed = file(params.baits_bed)
+params.target_bed = "/home/ubuntu/WES/panel-00005_withChr.targets.grch38.interval_list"
+target_bed = file(params.target_bed)
+
+workflow {
+    fq2bam(fastq_files, reference_folder, params.reference_name, baits_bed, target_bed)
+}
+
+process fq2bam {
+
+    //errorStrategy 'ignore'
+    publishDir params.out, mode: 'copy', overwrite: true
+    cpus 32
+    memory '120 GB'
+    input:
+    tuple val(name), file(fastq) 
+    file(reference_folder)
+    val(reference_name)
+    file(baits_bed)
+    file(target_bed)
+
+    output:
+    file("${name}_output/*")
+
+    """
+    mkdir ${name}_output
+    pbrun fq2bam \
+      --ref ${reference_folder}/${reference_name} \
+      --in-fq ${fastq} \
+      --bwa-options="-M" \
+      --out-duplicate-metrics ${name}_output/${name}_dupemetrics.txt \
+      --optical-duplicate-pixel-distance 300 \
+      --out-bam ${name}_output/mark_dups_${name}.bam \
+      --logfile ${name}_output/fq2bam.log
+
+    gatk --java-options "-Xmx16G" CollectHsMetrics \
+         --INPUT mark_dups_${name}.bam \
+         --OUTPUT ${name}_output/${name}_hs_metrics.txt \
+         --REFERENCE_SEQUENCE ${reference_folder}/${reference_name} \
+         --BAIT_INTERVALS ${baits_bed} \
+         --TARGET_INTERVALS ${target_bed} \
+         --MINIMUM_BASE_QUALITY 10 \
+         --MINIMUM_MAPPING_QUALITY 10 \
+         --PER_TARGET_COVERAGE ${name}_hs_metrics_per_target.txt
+
+    """
+}
+
