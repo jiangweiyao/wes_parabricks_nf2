@@ -15,7 +15,7 @@ target_bed = file(params.target_bed)
 
 workflow {
     fq2bam(fastq_files, reference_folder, params.reference_name)
-    gatk_CollectHsMetrics(fq2bam.out,reference_folder, params.reference_name, baits_bed, target_bed)
+    metrics(fq2bam.out,reference_folder, params.reference_name, baits_bed, target_bed)
 }
 
 process fq2bam {
@@ -36,7 +36,7 @@ process fq2bam {
     mkdir ${name}_output
     pbrun fq2bam \
       --ref ${reference_folder}/${reference_name} \
-      --in-fq ${fastq} \
+      --in-fq ${fastq} "@RG\\tID:s${name}\\tLB:lib${name}\\tPL:SING\\tSM:${name}\\tPU:FC1.${name}" \
       --bwa-options="-M" \
       --out-duplicate-metrics ${name}_output/${name}_dupemetrics.txt \
       --optical-duplicate-pixel-distance 300 \
@@ -45,12 +45,12 @@ process fq2bam {
     """
 }
 
-process gatk_CollectHsMetrics {
+process metrics {
 
     //errorStrategy 'ignore'
     publishDir params.out, mode: 'copy', overwrite: true
-    cpus 4
-    memory '20 GB'
+    cpus 8
+    memory '61 GB'
     input:
     tuple val(name), file(fq2bam_input)
     file(reference_folder)
@@ -64,30 +64,31 @@ process gatk_CollectHsMetrics {
     """
     mkdir ${name}_metric
 
-    gatk --java-options "-Xmx16G" CollectHsMetrics \
-         --INPUT mark_dups_${name}.bam \
-         --OUTPUT ${name}_metric/${name}_hs_metrics.txt \
-         --REFERENCE_SEQUENCE ${reference_folder}/${reference_name} \
-         --BAIT_INTERVALS ${baits_bed} \
-         --TARGET_INTERVALS ${target_bed} \
-         --MINIMUM_BASE_QUALITY 10 \
-         --MINIMUM_MAPPING_QUALITY 10 \
-         --PER_TARGET_COVERAGE ${name}_metric/${name}_hs_metrics_per_target.txt \
-         --COVERAGE_CAP 1000 \
-         --METRIC_ACCUMULATION_LEVEL ALL_READS \
-         --NEAR_DISTANCE 250 \
-         --CLIP_OVERLAPPING_READS true \
-         --INCLUDE_INDELS false
+    #gatk --java-options "-Xmx16G" CollectHsMetrics \
+    #     --INPUT mark_dups_${name}.bam \
+    #     --OUTPUT ${name}_metric/${name}_hs_metrics.txt \
+    #     --REFERENCE_SEQUENCE ${reference_folder}/${reference_name} \
+    #     --BAIT_INTERVALS ${baits_bed} \
+    #    --TARGET_INTERVALS ${target_bed} \
+    #    --MINIMUM_BASE_QUALITY 10 \
+    #    --MINIMUM_MAPPING_QUALITY 10 \
+    #    --PER_TARGET_COVERAGE ${name}_metric/${name}_hs_metrics_per_target.txt \
+    #    --COVERAGE_CAP 1000 \
+    #    --METRIC_ACCUMULATION_LEVEL ALL_READS \
+    #    --NEAR_DISTANCE 250 \
+    #    --CLIP_OVERLAPPING_READS true 
 
-    fgbio ClipBam \
+
+    fgbio ClipBam -Xmx60g \
          --input=mark_dups_${name}.bam \
          --output=clipped.bam \
          --ref=${reference_folder}/${reference_name} \
          --clipping-mode=Hard \
          --clip-overlapping-reads=true
 
+
     sambamba-0.8.1 index \
-         --nthreads 6 \
+         --nthreads 8 \
          clipped.bam
 
     bedtools nuc \
@@ -100,7 +101,7 @@ process gatk_CollectHsMetrics {
          panel_targetlevel_nucstats.txt \
          clipped.bam > tmp.txt
 
-    cat <(paste <(cat panel_targetlevel_nucstats.txt | head -n 1) <(echo "14_coverage")) <(cat tmp.txt) > ${name}_metric}/${name}_panel_targetlevel_nucstats_covstats.txt
+    cat <(paste <(cat panel_targetlevel_nucstats.txt | head -n 1) <(echo "14_coverage")) <(cat tmp.txt) > ${name}_metric/${name}_panel_targetlevel_nucstats_covstats.txt
 
 
     """

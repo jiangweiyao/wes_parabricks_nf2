@@ -37,7 +37,7 @@ process fq2bam {
     mkdir ${name}_output
     pbrun fq2bam \
       --ref ${reference_folder}/${reference_name} \
-      --in-fq ${fastq} \
+      --in-fq ${fastq} "@RG\tID:s1\tLB:lib1\tPL:SING\tSM:${name}\tPU:FC1.1"\
       --bwa-options="-M" \
       --out-duplicate-metrics ${name}_output/${name}_dupemetrics.txt \
       --optical-duplicate-pixel-distance 300 \
