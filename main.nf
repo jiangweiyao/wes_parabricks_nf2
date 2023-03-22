@@ -2,17 +2,10 @@
 
 nextflow.enable.dsl=2
 
-params.input_fastqs = "/home/ubuntu/WES/fastq/*_{R1_001,R2_001}.fastq.gz"
-fastq_files = Channel.fromFilePairs(params.input_fastqs, type: 'file').first()
-params.reference_folder = "/home/ubuntu/WES/GRCh38_reference_genome"
+fastq_files = Channel.fromFilePairs(params.input_fastqs, type: 'file')
 reference_folder = file(params.reference_folder)
-params.reference_name = "GRCh38_full_analysis_set_plus_decoy_hla.fa"
-params.out = "parabricks_wes_output"
-params.baits_int = "/home/ubuntu/WES/panel-00005_withChr.baits.grch38.interval_list"
 baits_int = file(params.baits_int)
-params.target_int = "/home/ubuntu/WES/panel-00005_withChr.targets.grch38.interval_list"
 target_int = file(params.target_int)
-params.target_bed = "/home/ubuntu/WES/panel-00005_withChr.targets.grch38.bed"
 target_bed = file(params.target_bed)
 
 workflow {

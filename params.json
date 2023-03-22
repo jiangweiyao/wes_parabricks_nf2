@@ -1,0 +1,9 @@
+{	
+	"input_fastqs" : "/home/ubuntu/WES/fastq/*_{R1_001,R2_001}.fastq.gz",
+	"reference_folder" : "/home/ubuntu/WES/GRCh38_reference_genome",
+	"reference_name" : "GRCh38_full_analysis_set_plus_decoy_hla.fa",
+	"out" : "parabricks_wes_output",
+	"baits_int" : "/home/ubuntu/WES/panel-00005_withChr.baits.grch38.interval_list",
+	"target_int" : "/home/ubuntu/WES/panel-00005_withChr.targets.grch38.interval_list",
+	"target_bed" : "/home/ubuntu/WES/panel-00005/panel-00005_withChr.targets.grch38.bed"
+}
