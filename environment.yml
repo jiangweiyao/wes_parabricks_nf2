@@ -8,6 +8,7 @@ dependencies:
   - _openmp_mutex=4.5
   - _r-mutex=1.0.1
   - alsa-lib=1.2.8
+  - bbmap=39.01
   - bedtools=2.23.0
   - binutils_impl_linux-64=2.40
   - bwidget=1.9.14
@@ -81,6 +82,7 @@ dependencies:
   - openjdk=17.0.3
   - openssl=1.1.1t
   - pango=1.50.14
+  - pbzip2=1.1.13
   - pcre2=10.40
   - pip=23.0.1
   - pixman=0.40.0
