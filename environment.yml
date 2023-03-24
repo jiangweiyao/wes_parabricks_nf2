@@ -9,6 +9,7 @@ dependencies:
   - _r-mutex=1.0.1
   - alsa-lib=1.2.8
   - bbmap=39.01
+  - bc=1.07.1
   - bedtools=2.23.0
   - binutils_impl_linux-64=2.40
   - bwidget=1.9.14
